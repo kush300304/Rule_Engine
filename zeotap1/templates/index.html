@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rule Engine UI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.5/cdn.min.js" defer></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div x-data="ruleEngine()" class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-8 text-center text-blue-600">Rule Engine UI</h1>
+        
+        <!-- Create Rule Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4">Create Rule</h2>
+            <div class="mb-4">
+                <label for="ruleName" class="block text-sm font-medium text-gray-700">Rule Name</label>
+                <input type="text" id="ruleName" x-model="newRule.name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            </div>
+            <div class="mb-4">
+                <label for="ruleDescription" class="block text-sm font-medium text-gray-700">Rule Description</label>
+                <textarea id="ruleDescription" x-model="newRule.description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"></textarea>
+            </div>
+            <div class="mb-4">
+                <label for="ruleString" class="block text-sm font-medium text-gray-700">Rule String</label>
+                <input type="text" id="ruleString" x-model="newRule.rule_string" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            </div>
+            <button @click="createRule" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">Create Rule</button>
+        </div>
+        
+        <!-- Combine Rules Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4">Combine Rules</h2>
+            <div class="mb-4">
+                <label for="combinedRuleName" class="block text-sm font-medium text-gray-700">Combined Rule Name</label>
+                <input type="text" id="combinedRuleName" x-model="combinedRule.name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            </div>
+            <div class="mb-4">
+                <label for="combinedRuleDescription" class="block text-sm font-medium text-gray-700">Combined Rule Description</label>
+                <textarea id="combinedRuleDescription" x-model="combinedRule.description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"></textarea>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Select Rules to Combine</label>
+                <div class="mt-2 space-y-2">
+                    <template x-for="rule in rules" :key="rule.id">
+                        <div class="flex items-center">
+                            <input type="checkbox" :id="'rule-' + rule.id" :value="rule.id" x-model="combinedRule.rule_ids" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                            <label :for="'rule-' + rule.id" class="ml-2 text-sm text-gray-700" x-text="rule.name"></label>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            <button @click="combineRules" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">Combine Rules</button>
+        </div>
+        
+        <!-- Evaluate Rule Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4">Evaluate Rule</h2>
+            <div class="mb-4">
+                <label for="evaluateRuleSelect" class="block text-sm font-medium text-gray-700">Select Rule</label>
+                <select id="evaluateRuleSelect" x-model="evaluateRule.rule_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                    <option value="">Select a rule</option>
+                    <template x-for="rule in rules" :key="rule.id">
+                        <option :value="rule.id" x-text="rule.name"></option>
+                    </template>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="evaluateData" class="block text-sm font-medium text-gray-700">Evaluation Data (JSON)</label>
+                <textarea id="evaluateData" x-model="evaluateRule.data" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" rows="4"></textarea>
+            </div>
+            <button @click="evaluateRuleFunction" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 transition-colors">Evaluate Rule</button>
+            <div x-show="evaluateRule.result !== null" class="mt-4">
+                <strong>Result:</strong>
+                <span x-text="evaluateRule.result ? 'True' : 'False'" :class="evaluateRule.result ? 'text-green-600' : 'text-red-600'"></span>
+            </div>
+        </div>
+        
+        <!-- Rules List -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Existing Rules</h2>
+            <ul class="divide-y divide-gray-200">
+                <template x-for="rule in rules" :key="rule.id">
+                    <li class="py-4">
+                        <div class="flex justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900" x-text="rule.name"></h3>
+                                <p class="text-sm text-gray-500" x-text="rule.description"></p>
+                            </div>
+                            <button @click="deleteRule(rule.id)" class="text-red-600 hover:text-red-800">Delete</button>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="static/script.js"></script>
+</body>
+</html>
